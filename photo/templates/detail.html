@@ -1,7 +1,7 @@
 <!-- ベーステンプレートを適用する -->
 {% extends 'base.html' %}
 <!-- ヘッダー情報のページタイトルを設定する -->
-{% block title %}Photo Detail{% endblock %}
+{% block title %}詳細ニュース{% endblock %}
 
     {% block contents %}
     <!-- Bootstrapのグリッドシステム -->
@@ -13,17 +13,44 @@
             <div class="col offset-3">
                 <!-- タイトル -->
                 <h2>{{object.title}}</h2>
-                <!-- コメント -->
-                <p>{{object.comment}}</p>
-                <br>
                 <!-- 投稿日時 -->
                 <p>{{object.posted_at}}に投稿</p>
+                <br>
+                <!-- コメント -->
+                <p>{{object.comment}}</p>
                 <!-- 1枚目の写真 -->
                 <p><img src="{{ object.image1.url }}"></img></p>
                 <!-- 2枚目の写真 -->
                 {% if object.image2 %}
                     <p><img src="{{ object.image2.url }}"></img></p>
                 {% endif %}
+
+                <br>
+                <h2>コメント</h2>
+                <ul class="list-unstyled">
+                    {% for comment in comments %}
+                        <li class="media my-4">
+                            <div class="media-body">
+                                <h6 class="mt-0 mb-1">{{ comment.author }}</h5>
+                                <!-- 未承認コメントは隠す -->
+                                <p>{% if comment.approved_comment %}
+                                    {{ comment.text }}
+                                    {% else %}
+                                    管理人の承認待ちです
+                                    {% endif %}</p>
+                                <small>{{ comment.created_at }}に投稿</small>
+                            </div>
+                        </li>
+                        {% empty %}
+                            <li>No comments yet</li>
+                        {% endfor %}
+                </ul>
+                <form method="post">
+                    <!-- コメント投稿フォーム -->
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">投稿</button>
+                </form>
             </div>
         </div>
     </div>

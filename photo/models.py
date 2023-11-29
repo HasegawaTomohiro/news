@@ -17,7 +17,7 @@ class Category(models.Model):
         '''
         return self.title
 
-class PhotoPost(models.Model):
+class NewsPost(models.Model):
     '''投稿されたデータを管理するモデル
     '''
     # CustomUserモデル（のuser_id）とPhotoPostモデルを
@@ -74,3 +74,13 @@ class PhotoPost(models.Model):
         Returns(str):投稿記事のタイトル
         '''
         return self.title
+
+class Comment(models.Model):
+    post = models.ForeignKey(NewsPost, on_delete=models.CASCADE, related_name='comments')
+    author = models.CharField(max_length=50, blank=True, default='匿名')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    approved_comment = models.BooleanField(default=False)
+ 
+    def __str__(self):
+        return self.text

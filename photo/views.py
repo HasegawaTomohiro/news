@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 # django.views.genericからTemplateViewをインポート
 from django.views.generic import TemplateView, ListView
 # dnago.views.genericからCreateViewをインポート
@@ -6,15 +6,16 @@ from django.views.generic import CreateView
 # django.urlsからreverse_lazyをインポート
 from django.urls import reverse_lazy
 # formsモジュールからPhotoPostFormをインポート
-from .forms import PhotoPostForm
+from .forms import PhotoPostForm, CommentForm
 # method_decoratorをインポート
 from django.utils.decorators import method_decorator
 # login_requiredをインポート
 from django.contrib.auth.decorators import login_required
 # modelsモジュールからモデルPhotoPostをインポート
-from .models import PhotoPost
+from .models import NewsPost
 # django.views.genericからDetailViewをインポート
 from django.views.generic import DetailView
+
 
 class IndexView(ListView):
     '''トップページのビュー
@@ -23,7 +24,7 @@ class IndexView(ListView):
     template_name ='index.html'
     # モデルBlogPostのオブジェクトにorder_by()を適用して
     # 投稿日時の降順で並び替える
-    queryset = PhotoPost.objects.order_by('-posted_at')
+    queryset = NewsPost.objects.order_by('-posted_at')
     # 1ページに表示するレコードの件数
     paginate_by = 9
 
@@ -149,4 +150,55 @@ class DetailView(DetailView):
     # post.htmlをレンダリングする
     template_name ='detail.html'
     # クラス変数modelにモデルBlogPostを設定
-    model = PhotoPost
+    model = NewsPost
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        #投稿されたコメントの全権を取得
+        comments = self.object.comments.all()
+        #コメントフォームを設置
+        form = CommentForm()
+        context.update({
+            'comments': comments, 
+            'form': form,
+        })
+        return context
+    # POSTで呼び出された場合はコメントを登録
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = CommentForm(data=self.request.POST or None)
+        #フォームの入力値に問題がなければ、投稿に紐づけてから登録する
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = self.object
+            comment.save()
+ 
+        return redirect('../')   
+
+class MypageView(ListView):
+    '''マイページのビュー
+
+    Attributes:
+        template_name: レンダリングするテンプレート
+        paginate_by: 1ページに表示するレコードの件数
+    '''
+    # mypage.htmlをレンダリングする
+    template_name ='mypage.html'
+    # 1ページに表示するレコードの件数
+    paginate_by = 9
+
+    def get_queryset(self):
+        '''クエリを実行する
+
+        self.kwargsの取得が必要なため、クラス変数querysetではなく、
+        get_queryset()のオーバーライドによりクエリを実行する
+
+        Returns:
+            クエリによって取得されたレコード
+        '''
+        # 現在ログインしているユーザー名はHttpRequest.userに格納されている
+        # filter(userフィールド=userオブジェクト)で絞り込む
+        queryset = PhotoPost.objects.filter(
+            user=self.request.user).order_by('-posted_at')
+        # クエリによって取得されたレコードを返す
+        return queryset

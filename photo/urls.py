@@ -29,4 +29,8 @@ urlpatterns = [
     # photo-detail/<Photo postsテーブルのid値>にマッチング
     # <int:pk>は辞書{pk: id値(int)}としてDetailViewに渡される
     path('photo-detail/<int:pk>', views.DetailView.as_view(), name = 'photo_detail'),
+
+    # マイページ
+    # mypage/へのアクセスはMypageViewを実行
+    path('mypage/', views.MypageView.as_view(), name = 'mypage'),
 ]
